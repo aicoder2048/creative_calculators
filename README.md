@@ -16,6 +16,8 @@
 
 **文件**: `cyberpunk_matrix_calculator.html`
 
+![赛博朋克矩阵计算器](screenshots/cyberpunk_matrix_calculator.jpg)
+
 ### 🎨 设计特点
 - **主题**: 黑客帝国/赛博朋克风格
 - **配色**: 经典绿色荧光字体（#0f0）配黑色背景
@@ -66,6 +68,8 @@
 ## 3. 迷幻万花筒计算器
 
 **文件**: `psychedelic_kaleidoscope_calculator.html`
+
+![迷幻万花筒计算器](screenshots/psychedelic_kaleidoscope_calculator.jpg)
 
 ### 🎨 设计特点
 - **主题**: 60-70年代迷幻艺术风格
@@ -120,6 +124,8 @@
 
 **文件**: `dna_helix_bio_calculator.html`  
 **详细文档**: `README_dna-calculator.md`
+
+![DNA双螺旋生物计算器](screenshots/dna_helix_bio_calculator.jpg)
 
 ### 🎨 设计特点
 - **主题**: 生物科技/基因工程风格
