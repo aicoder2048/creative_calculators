@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Board Calculator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Circuit Background */
+        .circuit-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .circuit-trace {
+            position: absolute;
+            background: #1a4d2e;
+            box-shadow: 0 0 10px rgba(0, 255, 100, 0.3);
+        }
+        
+        .circuit-trace.horizontal {
+            height: 2px;
+            width: 100px;
+        }
+        
+        .circuit-trace.vertical {
+            width: 2px;
+            height: 100px;
+        }
+        
+        .circuit-trace.active {
+            background: #00ff64;
+            box-shadow: 0 0 20px rgba(0, 255, 100, 0.8);
+            animation: pulse-trace 0.5s ease-out;
+        }
+        
+        @keyframes pulse-trace {
+            0% {
+                box-shadow: 0 0 20px rgba(0, 255, 100, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 40px rgba(0, 255, 100, 0);
+            }
+        }
+        
+        /* Boot Sequence */
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .boot-text {
+            color: #00ff64;
+            font-size: 1.2rem;
+            margin: 10px;
+            opacity: 0;
+            animation: boot-fade 0.5s forwards;
+        }
+        
+        .boot-text:nth-child(1) { animation-delay: 0.2s; }
+        .boot-text:nth-child(2) { animation-delay: 0.6s; }
+        .boot-text:nth-child(3) { animation-delay: 1s; }
+        .boot-text:nth-child(4) { animation-delay: 1.4s; }
+        
+        @keyframes boot-fade {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Calculator Container */
+        .calculator {
+            background: #1a1a1a;
+            border: 3px solid #2a2a2a;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 100, 0.2),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+            overflow: hidden;
+        }
+        
+        .calculator::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: repeating-linear-gradient(
+                45deg,
+                #1a4d2e,
+                #1a4d2e 10px,
+                #0f2818 10px,
+                #0f2818 20px
+            );
+            z-index: -1;
+            opacity: 0.3;
+        }
+        
+        /* PCB Texture */
+        .pcb-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background-image: 
+                repeating-linear-gradient(0deg, #444 0px, transparent 2px, transparent 20px),
+                repeating-linear-gradient(90deg, #444 0px, transparent 2px, transparent 20px);
+            pointer-events: none;
+        }
+        
+        /* LED Display */
+        .display {
+            background: #000;
+            color: #00ff00;
+            font-size: 2.5rem;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            border: 2px solid #333;
+            border-radius: 10px;
+            min-height: 80px;
+            position: relative;
+            overflow: hidden;
+            font-weight: 700;
+            letter-spacing: 3px;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 0, 0.03) 2px,
+                rgba(0, 255, 0, 0.03) 4px
+            );
+            pointer-events: none;
+        }
+        
+        .display.error {
+            animation: short-circuit 0.5s;
+            color: #ff0000;
+        }
+        
+        @keyframes short-circuit {
+            0%, 20%, 40%, 60%, 80%, 100% {
+                opacity: 1;
+            }
+            10%, 30%, 50%, 70%, 90% {
+                opacity: 0.3;
+            }
+        }
+        
+        /* Matrix Effect */
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background-size: 4px 4px;
+            background-image: 
+                radial-gradient(circle, #00ff00 1px, transparent 1px);
+            pointer-events: none;
+        }
+        
+        /* Button Grid */
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            position: relative;
+        }
+        
+        /* Component Buttons */
+        .btn {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            color: #00ff64;
+            font-size: 1.4rem;
+            padding: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            font-weight: 700;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(0, 255, 100, 0.8), transparent);
+            transform: translate(-50%, -50%);
+            transition: all 0.3s;
+            border-radius: 50%;
+        }
+        
+        .btn:hover {
+            background: #3a3a3a;
+            border-color: #00ff64;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 100, 0.5);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:active::before {
+            width: 100px;
+            height: 100px;
+        }
+        
+        /* Solder Points */
+        .solder-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #666;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .solder-point.active {
+            background: #ffaa00;
+            box-shadow: 0 0 10px #ffaa00;
+            animation: glow 0.5s;
+        }
+        
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 10px #ffaa00;
+            }
+            50% {
+                box-shadow: 0 0 20px #ffaa00, 0 0 30px #ff6600;
+            }
+        }
+        
+        /* Component Icons */
+        .btn.operator {
+            position: relative;
+            font-size: 1rem;
+        }
+        
+        .component-icon {
+            width: 30px;
+            height: 30px;
+            margin: 0 auto;
+        }
+        
+        /* Electrical Pulse Animation */
+        .pulse {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ff64;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff64;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        /* Heat Map */
+        .heat-map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 5;
+        }
+        
+        .heat-map.active {
+            opacity: 1;
+            background: radial-gradient(
+                circle at var(--x) var(--y),
+                rgba(255, 100, 0, 0.3),
+                transparent 50%
+            );
+        }
+        
+        /* Power Surge Effect */
+        .power-surge {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(0, 255, 100, 0.8), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .power-surge.active {
+            animation: surge 0.8s ease-out;
+        }
+        
+        @keyframes surge {
+            to {
+                width: 150vh;
+                height: 150vh;
+                opacity: 0;
+            }
+        }
+        
+        /* Spark Effect */
+        .spark {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #ffff00;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* Special Buttons */
+        .btn.zero {
+            grid-column: span 2;
+        }
+        
+        .btn.equals {
+            background: #1a4d2e;
+            color: #00ff00;
+            border-color: #00ff64;
+        }
+        
+        .btn.equals:hover {
+            background: #2a6d3e;
+            box-shadow: 0 5px 30px rgba(0, 255, 100, 0.8);
+        }
+        
+        .btn.clear {
+            background: #4d1a1a;
+            color: #ff6464;
+            border-color: #ff6464;
+        }
+        
+        .btn.clear:hover {
+            background: #6d2a2a;
+            box-shadow: 0 5px 30px rgba(255, 100, 100, 0.8);
+        }
+        
+        /* LED Segment Style for Numbers */
+        .btn.number {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            text-shadow: 0 0 10px currentColor;
+        }
+    </style>
+</head>
+<body>
+    <!-- Boot Screen -->
+    <div class="boot-screen" id="bootScreen">
+        <div class="boot-text">INITIALIZING SYSTEM...</div>
+        <div class="boot-text">LOADING COMPONENTS...</div>
+        <div class="boot-text">CALIBRATING CIRCUITS...</div>
+        <div class="boot-text">READY</div>
+    </div>
+    
+    <!-- Circuit Background -->
+    <div class="circuit-bg" id="circuitBg"></div>
+    
+    <!-- Power Surge Effect -->
+    <div class="power-surge" id="powerSurge"></div>
+    
+    <!-- Calculator -->
+    <div class="calculator">
+        <div class="pcb-texture"></div>
+        <div class="heat-map" id="heatMap"></div>
+        
+        <!-- Display -->
+        <div class="display" id="display">
+            <div class="matrix-bg"></div>
+            <span id="displayText">0</span>
+        </div>
+        
+        <!-- Button Grid -->
+        <div class="button-grid" id="buttonGrid">
+            <button class="btn clear" data-action="clear">C</button>
+            <button class="btn operator" data-action="operator" data-value="/">
+                <svg class="component-icon" viewBox="0 0 30 30">
+                    <!-- Diode Symbol -->
+                    <line x1="5" y1="15" x2="25" y2="15" stroke="#00ff64" stroke-width="2"/>
+                    <path d="M 15 10 L 15 20 M 20 10 L 15 15 L 20 20" stroke="#00ff64" stroke-width="2" fill="none"/>
+                </svg>
+            </button>
+            <button class="btn operator" data-action="operator" data-value="*">
+                <svg class="component-icon" viewBox="0 0 30 30">
+                    <!-- Transistor Symbol -->
+                    <circle cx="15" cy="15" r="8" stroke="#00ff64" stroke-width="2" fill="none"/>
+                    <line x1="7" y1="15" x2="15" y2="15" stroke="#00ff64" stroke-width="2"/>
+                    <line x1="15" y1="10" x2="15" y2="20" stroke="#00ff64" stroke-width="2"/>
+                    <line x1="15" y1="10" x2="23" y2="7" stroke="#00ff64" stroke-width="2"/>
+                    <line x1="15" y1="20" x2="23" y2="23" stroke="#00ff64" stroke-width="2"/>
+                </svg>
+            </button>
+            <button class="btn operator" data-action="operator" data-value="-">
+                <svg class="component-icon" viewBox="0 0 30 30">
+                    <!-- Capacitor Symbol -->
+                    <line x1="5" y1="15" x2="13" y2="15" stroke="#00ff64" stroke-width="2"/>
+                    <line x1="17" y1="15" x2="25" y2="15" stroke="#00ff64" stroke-width="2"/>
+                    <line x1="13" y1="10" x2="13" y2="20" stroke="#00ff64" stroke-width="3"/>
+                    <line x1="17" y1="10" x2="17" y2="20" stroke="#00ff64" stroke-width="3"/>
+                </svg>
+            </button>
+            
+            <button class="btn number" data-action="number" data-value="7">7</button>
+            <button class="btn number" data-action="number" data-value="8">8</button>
+            <button class="btn number" data-action="number" data-value="9">9</button>
+            <button class="btn operator" data-action="operator" data-value="+">
+                <svg class="component-icon" viewBox="0 0 30 30">
+                    <!-- Resistor Symbol -->
+                    <line x1="5" y1="15" x2="9" y2="15" stroke="#00ff64" stroke-width="2"/>
+                    <line x1="21" y1="15" x2="25" y2="15" stroke="#00ff64" stroke-width="2"/>
+                    <path d="M 9 15 L 11 10 L 13 20 L 15 10 L 17 20 L 19 10 L 21 15" stroke="#00ff64" stroke-width="2" fill="none"/>
+                </svg>
+            </button>
+            
+            <button class="btn number" data-action="number" data-value="4">4</button>
+            <button class="btn number" data-action="number" data-value="5">5</button>
+            <button class="btn number" data-action="number" data-value="6">6</button>
+            <button class="btn" data-action="decimal" data-value=".">.</button>
+            
+            <button class="btn number" data-action="number" data-value="1">1</button>
+            <button class="btn number" data-action="number" data-value="2">2</button>
+            <button class="btn number" data-action="number" data-value="3">3</button>
+            <button class="btn equals" data-action="equals" rowspan="2">=</button>
+            
+            <button class="btn number zero" data-action="number" data-value="0">0</button>
+            <button class="btn" data-action="percent" data-value="%">%</button>
+        </div>
+    </div>
+    
+    <script>
+        // Calculator State
+        let currentValue = '0';
+        let previousValue = '';
+        let operation = null;
+        let shouldResetDisplay = false;
+        
+        // DOM Elements
+        const display = document.getElementById('displayText');
+        const displayContainer = document.getElementById('display');
+        const buttonGrid = document.getElementById('buttonGrid');
+        const heatMap = document.getElementById('heatMap');
+        const bootScreen = document.getElementById('bootScreen');
+        const circuitBg = document.getElementById('circuitBg');
+        const powerSurge = document.getElementById('powerSurge');
+        
+        // Boot Sequence
+        setTimeout(() => {
+            bootScreen.style.opacity = '0';
+            setTimeout(() => {
+                bootScreen.style.display = 'none';
+            }, 500);
+        }, 2000);
+        
+        // Create Circuit Background
+        function createCircuitBackground() {
+            for (let i = 0; i < 20; i++) {
+                const trace = document.createElement('div');
+                trace.className = 'circuit-trace ' + (Math.random() > 0.5 ? 'horizontal' : 'vertical');
+                trace.style.left = Math.random() * 100 + '%';
+                trace.style.top = Math.random() * 100 + '%';
+                circuitBg.appendChild(trace);
+            }
+        }
+        
+        createCircuitBackground();
+        
+        // Create Solder Points
+        function createSolderPoints() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                for (let i = 0; i < 4; i++) {
+                    const point = document.createElement('div');
+                    point.className = 'solder-point';
+                    const positions = [
+                        { top: '5px', left: '5px' },
+                        { top: '5px', right: '5px' },
+                        { bottom: '5px', left: '5px' },
+                        { bottom: '5px', right: '5px' }
+                    ];
+                    Object.assign(point.style, positions[i]);
+                    btn.appendChild(point);
+                }
+            });
+        }
+        
+        createSolderPoints();
+        
+        // Electrical Pulse Animation
+        function createPulse(startX, startY, endX, endY) {
+            const pulse = document.createElement('div');
+            pulse.className = 'pulse';
+            pulse.style.left = startX + 'px';
+            pulse.style.top = startY + 'px';
+            document.body.appendChild(pulse);
+            
+            const duration = 500;
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const x = startX + (endX - startX) * progress;
+                const y = startY + (endY - startY) * progress;
+                
+                pulse.style.left = x + 'px';
+                pulse.style.top = y + 'px';
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    pulse.remove();
+                }
+            }
+            
+            animate();
+        }
+        
+        // Heat Map Effect
+        function updateHeatMap(x, y) {
+            heatMap.style.setProperty('--x', x + 'px');
+            heatMap.style.setProperty('--y', y + 'px');
+            heatMap.classList.add('active');
+            
+            setTimeout(() => {
+                heatMap.classList.remove('active');
+            }, 1000);
+        }
+        
+        // Spark Effect
+        function createSparks(x, y, count = 10) {
+            for (let i = 0; i < count; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.left = x + 'px';
+                spark.style.top = y + 'px';
+                document.body.appendChild(spark);
+                
+                const angle = (Math.PI * 2 * i) / count;
+                const velocity = 100 + Math.random() * 100;
+                const lifetime = 500 + Math.random() * 500;
+                
+                let startTime = Date.now();
+                
+                function animateSpark() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / lifetime;
+                    
+                    if (progress < 1) {
+                        const distance = velocity * progress;
+                        spark.style.left = x + Math.cos(angle) * distance + 'px';
+                        spark.style.top = y + Math.sin(angle) * distance + 'px';
+                        spark.style.opacity = 1 - progress;
+                        requestAnimationFrame(animateSpark);
+                    } else {
+                        spark.remove();
+                    }
+                }
+                
+                animateSpark();
+            }
+        }
+        
+        // Power Surge Animation
+        function triggerPowerSurge() {
+            powerSurge.classList.add('active');
+            setTimeout(() => {
+                powerSurge.classList.remove('active');
+            }, 800);
+        }
+        
+        // Update Display
+        function updateDisplay() {
+            display.textContent = currentValue;
+        }
+        
+        // Calculator Operations
+        function handleNumber(num) {
+            if (shouldResetDisplay) {
+                currentValue = '';
+                shouldResetDisplay = false;
+            }
+            
+            if (currentValue === '0') {
+                currentValue = num;
+            } else {
+                currentValue += num;
+            }
+            
+            updateDisplay();
+        }
+        
+        function handleOperator(op) {
+            if (operation !== null && !shouldResetDisplay) {
+                calculate();
+            }
+            
+            previousValue = currentValue;
+            operation = op;
+            shouldResetDisplay = true;
+        }
+        
+        function handleDecimal() {
+            if (shouldResetDisplay) {
+                currentValue = '0';
+                shouldResetDisplay = false;
+            }
+            
+            if (!currentValue.includes('.')) {
+                currentValue += '.';
+            }
+            
+            updateDisplay();
+        }
+        
+        function handlePercent() {
+            currentValue = String(parseFloat(currentValue) / 100);
+            updateDisplay();
+        }
+        
+        function calculate() {
+            if (operation === null || previousValue === '') return;
+            
+            const prev = parseFloat(previousValue);
+            const current = parseFloat(currentValue);
+            let result;
+            
+            switch (operation) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    if (current === 0) {
+                        handleError();
+                        return;
+                    }
+                    result = prev / current;
+                    break;
+            }
+            
+            currentValue = String(result);
+            operation = null;
+            previousValue = '';
+            shouldResetDisplay = true;
+            updateDisplay();
+            
+            // Trigger power surge effect
+            triggerPowerSurge();
+            
+            // Create sparks at display
+            const displayRect = displayContainer.getBoundingClientRect();
+            createSparks(
+                displayRect.left + displayRect.width / 2,
+                displayRect.top + displayRect.height / 2,
+                15
+            );
+        }
+        
+        function handleClear() {
+            currentValue = '0';
+            previousValue = '';
+            operation = null;
+            shouldResetDisplay = false;
+            updateDisplay();
+            displayContainer.classList.remove('error');
+        }
+        
+        function handleError() {
+            currentValue = 'ERROR';
+            displayContainer.classList.add('error');
+            updateDisplay();
+            
+            // Short circuit effect
+            setTimeout(() => {
+                handleClear();
+            }, 1500);
+        }
+        
+        // Button Click Handler
+        buttonGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn');
+            if (!btn) return;
+            
+            const action = btn.dataset.action;
+            const value = btn.dataset.value;
+            
+            // Visual feedback
+            const rect = btn.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            // Create pulse to display
+            const displayRect = displayContainer.getBoundingClientRect();
+            const displayCenterX = displayRect.left + displayRect.width / 2;
+            const displayCenterY = displayRect.top + displayRect.height / 2;
+            
+            createPulse(centerX, centerY, displayCenterX, displayCenterY);
+            
+            // Activate solder points
+            const solderPoints = btn.querySelectorAll('.solder-point');
+            solderPoints.forEach(point => {
+                point.classList.add('active');
+                setTimeout(() => {
+                    point.classList.remove('active');
+                }, 300);
+            });
+            
+            // Update heat map
+            updateHeatMap(
+                e.clientX - btn.offsetLeft,
+                e.clientY - btn.offsetTop
+            );
+            
+            // Activate random circuit traces
+            const traces = document.querySelectorAll('.circuit-trace');
+            const randomTraces = Array.from(traces)
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 3);
+            
+            randomTraces.forEach(trace => {
+                trace.classList.add('active');
+                setTimeout(() => {
+                    trace.classList.remove('active');
+                }, 500);
+            });
+            
+            // Handle calculator action
+            switch (action) {
+                case 'number':
+                    handleNumber(value);
+                    break;
+                case 'operator':
+                    handleOperator(value);
+                    break;
+                case 'decimal':
+                    handleDecimal();
+                    break;
+                case 'percent':
+                    handlePercent();
+                    break;
+                case 'equals':
+                    calculate();
+                    break;
+                case 'clear':
+                    handleClear();
+                    break;
+            }
+        });
+        
+        // Keyboard Support
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            const button = document.querySelector(`[data-value="${key}"]`) ||
+                          document.querySelector(`[data-value="${key.toUpperCase()}"]`);
+            
+            if (button) {
+                button.click();
+                return;
+            }
+            
+            switch (key) {
+                case 'Enter':
+                    document.querySelector('[data-action="equals"]').click();
+                    break;
+                case 'Escape':
+                case 'c':
+                case 'C':
+                    document.querySelector('[data-action="clear"]').click();
+                    break;
+            }
+        });
+        
+        // Ambient circuit animation
+        setInterval(() => {
+            const traces = document.querySelectorAll('.circuit-trace:not(.active)');
+            if (traces.length > 0) {
+                const randomTrace = traces[Math.floor(Math.random() * traces.length)];
+                randomTrace.classList.add('active');
+                setTimeout(() => {
+                    randomTrace.classList.remove('active');
+                }, 1000);
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

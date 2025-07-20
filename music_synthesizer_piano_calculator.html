@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Synthesizer Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .background-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.1), transparent);
+            animation: pulse 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.6; }
+        }
+        
+        .calculator {
+            background: rgba(20, 20, 30, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 50px rgba(138, 43, 226, 0.5);
+            max-width: 500px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(138, 43, 226, 0.3);
+            z-index: 10;
+        }
+        
+        .display-container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            min-height: 120px;
+        }
+        
+        .display {
+            font-size: 2.5em;
+            text-align: right;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .musical-notation {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 1.5em;
+            color: #ffeb3b;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .sound-wave {
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            transform: translateY(-50%);
+            height: 2px;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            opacity: 0;
+        }
+        
+        .sound-wave.active {
+            animation: wave 1s ease-out forwards;
+        }
+        
+        @keyframes wave {
+            0% { left: -100%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+        
+        .frequency-visualizer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 0 10px;
+        }
+        
+        .freq-bar {
+            flex: 1;
+            background: linear-gradient(to top, #00ff88, #00ffff);
+            min-height: 2px;
+            transition: height 0.1s ease;
+            opacity: 0.8;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 25px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, #2a2a3e, #16161d);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn.number {
+            background: linear-gradient(145deg, #1e3c72, #2a5298);
+        }
+        
+        .btn.number.lit {
+            animation: rainbow 0.5s ease;
+            background: linear-gradient(145deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
+            background-size: 400% 400%;
+        }
+        
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .btn.operator {
+            background: linear-gradient(145deg, #e91e63, #9c27b0);
+        }
+        
+        .btn.equals {
+            background: linear-gradient(145deg, #4caf50, #8bc34a);
+            grid-column: span 2;
+        }
+        
+        .btn.clear {
+            background: linear-gradient(145deg, #ff5722, #f44336);
+        }
+        
+        .volume-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+        
+        .volume-slider {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .volume-slider label {
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #00ff88, #00ffff);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            border-radius: 5px;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .musical-flourish {
+            position: absolute;
+            pointer-events: none;
+            font-size: 2em;
+            animation: flourish 2s ease-out forwards;
+        }
+        
+        @keyframes flourish {
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pulse"></div>
+    
+    <div class="calculator">
+        <div class="display-container">
+            <div class="display" id="display">0</div>
+            <div class="musical-notation" id="notation">♪</div>
+            <div class="sound-wave" id="soundWave"></div>
+            <div class="frequency-visualizer" id="freqVisualizer"></div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn clear" onclick="clearDisplay()">C</button>
+            <button class="btn operator" onclick="appendOperator('/')">/</button>
+            <button class="btn operator" onclick="appendOperator('*')">×</button>
+            <button class="btn operator" onclick="appendOperator('-')">-</button>
+            
+            <button class="btn number" onclick="appendNumber('7')">7</button>
+            <button class="btn number" onclick="appendNumber('8')">8</button>
+            <button class="btn number" onclick="appendNumber('9')">9</button>
+            <button class="btn operator" onclick="appendOperator('+')">+</button>
+            
+            <button class="btn number" onclick="appendNumber('4')">4</button>
+            <button class="btn number" onclick="appendNumber('5')">5</button>
+            <button class="btn number" onclick="appendNumber('6')">6</button>
+            <button class="btn number" onclick="memoryStore()">MS</button>
+            
+            <button class="btn number" onclick="appendNumber('1')">1</button>
+            <button class="btn number" onclick="appendNumber('2')">2</button>
+            <button class="btn number" onclick="appendNumber('3')">3</button>
+            <button class="btn number" onclick="memoryRecall()">MR</button>
+            
+            <button class="btn number" onclick="appendNumber('0')">0</button>
+            <button class="btn number" onclick="appendNumber('.')">.</button>
+            <button class="btn equals" onclick="calculate()">=</button>
+        </div>
+        
+        <div class="volume-controls">
+            <div class="volume-slider">
+                <label>Master Vol / M+</label>
+                <input type="range" class="slider" id="masterVolume" min="0" max="100" value="50" onchange="updateMemory(this.value, 'add')">
+            </div>
+            <div class="volume-slider">
+                <label>Bass Vol / M-</label>
+                <input type="range" class="slider" id="bassVolume" min="0" max="100" value="30" onchange="updateMemory(this.value, 'subtract')">
+            </div>
+            <div class="volume-slider">
+                <label>Treble Vol / MC</label>
+                <input type="range" class="slider" id="trebleVolume" min="0" max="100" value="70" onchange="updateMemory(0, 'clear')">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Audio context and synthesizer setup
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let currentValue = '0';
+        let previousValue = '';
+        let currentOperator = null;
+        let shouldResetDisplay = false;
+        let memory = 0;
+        
+        // Musical notes frequencies (C4 to B5)
+        const noteFrequencies = {
+            '0': 261.63, // C4
+            '1': 293.66, // D4
+            '2': 329.63, // E4
+            '3': 349.23, // F4
+            '4': 392.00, // G4
+            '5': 440.00, // A4
+            '6': 493.88, // B4
+            '7': 523.25, // C5
+            '8': 587.33, // D5
+            '9': 659.25, // E5
+            '.': 698.46  // F5
+        };
+        
+        // Chord frequencies for operators
+        const operatorChords = {
+            '+': [261.63, 329.63, 392.00], // C major
+            '-': [293.66, 349.23, 440.00], // D minor
+            '*': [329.63, 392.00, 493.88], // E minor
+            '/': [349.23, 440.00, 523.25]  // F major
+        };
+        
+        // Musical notation symbols
+        const noteSymbols = {
+            '0': '♩ C',
+            '1': '♩ D',
+            '2': '♩ E',
+            '3': '♩ F',
+            '4': '♩ G',
+            '5': '♩ A',
+            '6': '♩ B',
+            '7': '♩ C⁵',
+            '8': '♩ D⁵',
+            '9': '♩ E⁵',
+            '.': '♩ F⁵'
+        };
+        
+        // Initialize frequency visualizer
+        function initFrequencyVisualizer() {
+            const visualizer = document.getElementById('freqVisualizer');
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'freq-bar';
+                visualizer.appendChild(bar);
+            }
+        }
+        
+        // Animate frequency bars
+        function animateFrequencyBars() {
+            const bars = document.querySelectorAll('.freq-bar');
+            bars.forEach((bar, index) => {
+                const height = Math.random() * 25 + 5;
+                bar.style.height = height + 'px';
+            });
+        }
+        
+        // Play a single note
+        function playNote(frequency, duration = 200) {
+            const masterVolume = document.getElementById('masterVolume').value / 100;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3 * masterVolume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+            
+            // Animate frequency bars
+            animateFrequencyBars();
+            
+            // Trigger sound wave animation
+            const soundWave = document.getElementById('soundWave');
+            soundWave.classList.remove('active');
+            void soundWave.offsetWidth; // Trigger reflow
+            soundWave.classList.add('active');
+        }
+        
+        // Play a chord
+        function playChord(frequencies, duration = 300) {
+            frequencies.forEach(freq => {
+                playNote(freq, duration);
+            });
+        }
+        
+        // Play bass pulse
+        function playBassPulse() {
+            const bassVolume = document.getElementById('bassVolume').value / 100;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(55, audioContext.currentTime); // Low A
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1 * bassVolume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 2);
+        }
+        
+        // Musical flourish for results
+        function playFlourish() {
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            notes.forEach((freq, index) => {
+                setTimeout(() => {
+                    playNote(freq, 300);
+                }, index * 100);
+            });
+            
+            // Create visual flourish
+            const flourish = document.createElement('div');
+            flourish.className = 'musical-flourish';
+            flourish.innerHTML = '♫';
+            flourish.style.left = Math.random() * 80 + 10 + '%';
+            flourish.style.top = '50%';
+            document.body.appendChild(flourish);
+            
+            setTimeout(() => flourish.remove(), 2000);
+        }
+        
+        // Light up button with rainbow effect
+        function lightUpButton(button) {
+            button.classList.add('lit');
+            setTimeout(() => button.classList.remove('lit'), 500);
+        }
+        
+        function updateDisplay() {
+            document.getElementById('display').textContent = currentValue;
+            updateNotation();
+        }
+        
+        function updateNotation() {
+            const lastChar = currentValue[currentValue.length - 1];
+            const symbol = noteSymbols[lastChar] || '♪';
+            document.getElementById('notation').textContent = symbol;
+        }
+        
+        function appendNumber(num) {
+            if (shouldResetDisplay || currentValue === '0') {
+                currentValue = num === '.' ? '0.' : num;
+                shouldResetDisplay = false;
+            } else {
+                if (num === '.' && currentValue.includes('.')) return;
+                currentValue += num;
+            }
+            
+            updateDisplay();
+            
+            // Play note and light up button
+            const frequency = noteFrequencies[num];
+            if (frequency) {
+                playNote(frequency);
+            }
+            
+            const button = event.target;
+            lightUpButton(button);
+            
+            // Pulse background
+            playBassPulse();
+        }
+        
+        function appendOperator(op) {
+            if (currentOperator && !shouldResetDisplay) {
+                calculate(false);
+            }
+            
+            previousValue = currentValue;
+            currentOperator = op;
+            shouldResetDisplay = true;
+            
+            // Play operator chord
+            const chord = operatorChords[op];
+            if (chord) {
+                playChord(chord);
+            }
+        }
+        
+        function calculate(playSound = true) {
+            if (!currentOperator || previousValue === '') return;
+            
+            const prev = parseFloat(previousValue);
+            const current = parseFloat(currentValue);
+            let result;
+            
+            switch (currentOperator) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    result = current !== 0 ? prev / current : 'Error';
+                    break;
+            }
+            
+            currentValue = result.toString();
+            updateDisplay();
+            
+            if (playSound && result !== 'Error') {
+                playFlourish();
+            }
+            
+            currentOperator = null;
+            previousValue = '';
+            shouldResetDisplay = true;
+        }
+        
+        function clearDisplay() {
+            currentValue = '0';
+            previousValue = '';
+            currentOperator = null;
+            shouldResetDisplay = false;
+            updateDisplay();
+            
+            // Play clear sound
+            playChord([440, 220, 110], 500); // A4, A3, A2
+        }
+        
+        function memoryStore() {
+            memory = parseFloat(currentValue);
+            playChord([523.25, 659.25, 783.99], 200); // C major triad
+        }
+        
+        function memoryRecall() {
+            currentValue = memory.toString();
+            updateDisplay();
+            playChord([783.99, 659.25, 523.25], 200); // C major triad descending
+        }
+        
+        function updateMemory(value, operation) {
+            const trebleVolume = document.getElementById('trebleVolume').value / 100;
+            
+            switch(operation) {
+                case 'add':
+                    memory += value / 10;
+                    playNote(880, 150); // A5
+                    break;
+                case 'subtract':
+                    memory -= value / 10;
+                    playNote(440, 150); // A4
+                    break;
+                case 'clear':
+                    memory = 0;
+                    playNote(220 * trebleVolume + 200, 150); // Variable frequency based on slider
+                    break;
+            }
+        }
+        
+        // Initialize the calculator
+        initFrequencyVisualizer();
+        
+        // Start background pulse animation
+        setInterval(() => {
+            const pulse = document.querySelector('.background-pulse');
+            pulse.style.animation = 'none';
+            void pulse.offsetWidth; // Trigger reflow
+            pulse.style.animation = 'pulse 2s ease-in-out infinite';
+        }, 2000);
+        
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                appendNumber(e.key);
+            } else if (e.key === '.') {
+                appendNumber('.');
+            } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                appendOperator(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                calculate();
+            } else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+                clearDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
