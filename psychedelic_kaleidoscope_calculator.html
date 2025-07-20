@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psychedelic Calculator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Righteous&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Righteous', cursive;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        /* Kaleidoscope background */
+        .kaleidoscope {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 50%, transparent 30%, rgba(255, 0, 255, 0.3) 30.5%, transparent 31%),
+                radial-gradient(circle at 40% 80%, transparent 30%, rgba(0, 255, 255, 0.3) 30.5%, transparent 31%),
+                radial-gradient(circle at 70% 20%, transparent 30%, rgba(255, 255, 0, 0.3) 30.5%, transparent 31%),
+                conic-gradient(from 0deg at 50% 50%, 
+                    #ff006e, #fb5607, #ffbe0b, #8338ec, #3a86ff, #06ffa5, #ff006e);
+            animation: rotate 20s linear infinite;
+            filter: blur(2px);
+        }
+
+        .kaleidoscope::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                repeating-conic-gradient(from 0deg at 50% 50%, 
+                    transparent 0deg, rgba(255, 0, 255, 0.2) 15deg, transparent 30deg),
+                repeating-conic-gradient(from 45deg at 50% 50%, 
+                    transparent 0deg, rgba(0, 255, 255, 0.2) 15deg, transparent 30deg);
+            animation: rotate-reverse 15s linear infinite;
+        }
+
+        /* Tie-dye overlay */
+        .tie-dye {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+            background: 
+                radial-gradient(ellipse at top left, transparent 40%, rgba(255, 0, 128, 0.4) 70%, transparent 90%),
+                radial-gradient(ellipse at bottom right, transparent 40%, rgba(0, 255, 128, 0.4) 70%, transparent 90%),
+                radial-gradient(ellipse at center, transparent 30%, rgba(128, 0, 255, 0.4) 60%, transparent 80%);
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        /* Spiraling patterns */
+        .spiral-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .spiral {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            border-image: linear-gradient(45deg, 
+                #ff006e, #fb5607, #ffbe0b, #8338ec, #3a86ff, #06ffa5) 1;
+            border-radius: 50%;
+            animation: spiral-rotate 10s linear infinite;
+        }
+
+        .spiral:nth-child(2) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            animation-duration: 8s;
+            animation-direction: reverse;
+        }
+
+        .spiral:nth-child(3) {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            animation-duration: 6s;
+        }
+
+        /* Calculator container */
+        .calculator-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            z-index: 10;
+        }
+
+        .calculator {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 
+                0 0 50px rgba(255, 0, 255, 0.5),
+                0 0 100px rgba(0, 255, 255, 0.3),
+                inset 0 0 50px rgba(255, 255, 0, 0.2);
+            border: 3px solid transparent;
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                linear-gradient(45deg, #ff006e, #fb5607, #ffbe0b, #8338ec, #3a86ff, #06ffa5);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            animation: border-dance 3s linear infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calculator::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, 
+                transparent, rgba(255, 0, 255, 0.1), transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+            pointer-events: none;
+        }
+
+        /* Display */
+        .display {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            color: #fff;
+            font-size: 2.5em;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            border-radius: 15px;
+            min-width: 320px;
+            min-height: 80px;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 
+                0 0 10px currentColor,
+                0 0 20px currentColor,
+                0 0 30px currentColor;
+            animation: color-shift 5s linear infinite;
+            border: 2px solid transparent;
+            background-image: 
+                linear-gradient(#1a1a1a, #2a2a2a),
+                linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+
+        /* Buttons */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        button {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.8em;
+            padding: 25px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, 
+                rgba(255, 0, 110, 0.8), 
+                rgba(131, 56, 236, 0.8), 
+                rgba(58, 134, 255, 0.8));
+            color: white;
+            transform-style: preserve-3d;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, 
+                rgba(255, 255, 255, 0.8), 
+                rgba(255, 255, 255, 0.4), 
+                transparent);
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+
+        button:hover::before {
+            width: 200%;
+            height: 200%;
+        }
+
+        button:hover {
+            transform: scale(1.1) rotateZ(5deg);
+            animation: morph-colors 0.5s ease-in-out infinite alternate;
+            box-shadow: 
+                0 0 20px rgba(255, 0, 255, 0.8),
+                0 0 40px rgba(0, 255, 255, 0.6),
+                inset 0 0 20px rgba(255, 255, 0, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.95) rotateZ(-5deg);
+        }
+
+        .span-two {
+            grid-column: span 2;
+        }
+
+        .operator {
+            background: linear-gradient(135deg, 
+                rgba(255, 107, 107, 0.9), 
+                rgba(255, 190, 11, 0.9), 
+                rgba(6, 255, 165, 0.9));
+            animation-delay: 0.5s;
+        }
+
+        .equals {
+            background: linear-gradient(135deg, 
+                rgba(255, 0, 110, 0.9), 
+                rgba(58, 134, 255, 0.9), 
+                rgba(6, 255, 165, 0.9));
+            animation-delay: 1s;
+        }
+
+        /* Animations */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes rotate-reverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        @keyframes spiral-rotate {
+            from { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            to { transform: rotate(360deg) scale(1); }
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+        @keyframes color-shift {
+            0% { color: #ff006e; }
+            16.66% { color: #fb5607; }
+            33.33% { color: #ffbe0b; }
+            50% { color: #8338ec; }
+            66.66% { color: #3a86ff; }
+            83.33% { color: #06ffa5; }
+            100% { color: #ff006e; }
+        }
+
+        @keyframes border-dance {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: hue-rotate(0deg);
+            }
+            50% { 
+                transform: scale(1.02);
+                filter: hue-rotate(30deg);
+            }
+        }
+
+        @keyframes morph-colors {
+            0% { 
+                background: linear-gradient(135deg, 
+                    rgba(255, 0, 110, 0.9), 
+                    rgba(131, 56, 236, 0.9), 
+                    rgba(58, 134, 255, 0.9));
+                filter: hue-rotate(0deg);
+            }
+            100% { 
+                background: linear-gradient(135deg, 
+                    rgba(58, 134, 255, 0.9), 
+                    rgba(255, 0, 110, 0.9), 
+                    rgba(131, 56, 236, 0.9));
+                filter: hue-rotate(180deg);
+            }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.8), 
+                rgba(255, 0, 255, 0.4), 
+                transparent);
+            filter: blur(1px);
+            animation: float 20s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        .orb:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 5s;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.8), 
+                rgba(0, 255, 255, 0.4), 
+                transparent);
+        }
+
+        .orb:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 20%;
+            left: 30%;
+            animation-delay: 10s;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.8), 
+                rgba(255, 255, 0, 0.4), 
+                transparent);
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(100px, -50px) scale(1.2);
+            }
+            50% {
+                transform: translate(-50px, 100px) scale(0.8);
+            }
+            75% {
+                transform: translate(-100px, -100px) scale(1.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Backgrounds -->
+    <div class="kaleidoscope"></div>
+    <div class="tie-dye"></div>
+    
+    <!-- Spiraling elements -->
+    <div class="spiral-container">
+        <div class="spiral"></div>
+        <div class="spiral"></div>
+        <div class="spiral"></div>
+    </div>
+
+    <!-- Floating orbs -->
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+
+    <!-- Calculator -->
+    <div class="calculator-wrapper">
+        <div class="calculator">
+            <div class="display" id="display">0</div>
+            <div class="buttons">
+                <button onclick="clearDisplay()" class="span-two">CLEAR</button>
+                <button onclick="deleteLast()">DEL</button>
+                <button onclick="appendOperator('/')" class="operator">÷</button>
+                
+                <button onclick="appendNumber('7')">7</button>
+                <button onclick="appendNumber('8')">8</button>
+                <button onclick="appendNumber('9')">9</button>
+                <button onclick="appendOperator('*')" class="operator">×</button>
+                
+                <button onclick="appendNumber('4')">4</button>
+                <button onclick="appendNumber('5')">5</button>
+                <button onclick="appendNumber('6')">6</button>
+                <button onclick="appendOperator('-')" class="operator">-</button>
+                
+                <button onclick="appendNumber('1')">1</button>
+                <button onclick="appendNumber('2')">2</button>
+                <button onclick="appendNumber('3')">3</button>
+                <button onclick="appendOperator('+')" class="operator">+</button>
+                
+                <button onclick="appendDecimal()">.</button>
+                <button onclick="appendNumber('0')">0</button>
+                <button onclick="calculate()" class="span-two equals">=</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let currentInput = '0';
+        let previousInput = '';
+        let operation = null;
+        let shouldResetScreen = false;
+
+        function updateDisplay() {
+            display.textContent = currentInput;
+            
+            // Add random color flash on update
+            const colors = ['#ff006e', '#fb5607', '#ffbe0b', '#8338ec', '#3a86ff', '#06ffa5'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            display.style.textShadow = `
+                0 0 20px ${randomColor},
+                0 0 40px ${randomColor},
+                0 0 60px ${randomColor}
+            `;
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            updateDisplay();
+            addPsychedelicEffect();
+        }
+
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function appendNumber(num) {
+            if (currentInput === '0' || shouldResetScreen) {
+                currentInput = num;
+                shouldResetScreen = false;
+            } else {
+                currentInput += num;
+            }
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            if (shouldResetScreen) {
+                currentInput = '0';
+                shouldResetScreen = false;
+            }
+            if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (operation !== null) {
+                calculate();
+            }
+            previousInput = currentInput;
+            operation = op;
+            shouldResetScreen = true;
+            addPsychedelicEffect();
+        }
+
+        function calculate() {
+            if (operation === null || shouldResetScreen) return;
+            
+            let result;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+            
+            switch (operation) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    result = current === 0 ? 'Error' : prev / current;
+                    break;
+                default:
+                    return;
+            }
+            
+            currentInput = result.toString();
+            operation = null;
+            shouldResetScreen = true;
+            updateDisplay();
+            addPsychedelicEffect();
+        }
+
+        function addPsychedelicEffect() {
+            // Add a trippy effect when calculating
+            document.body.style.filter = 'hue-rotate(180deg)';
+            setTimeout(() => {
+                document.body.style.filter = 'hue-rotate(0deg)';
+            }, 300);
+        }
+
+        // Initialize
+        updateDisplay();
+
+        // Add keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+            if (e.key === '.') appendDecimal();
+            if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') appendOperator(e.key);
+            if (e.key === 'Enter' || e.key === '=') calculate();
+            if (e.key === 'Escape') clearDisplay();
+            if (e.key === 'Backspace') deleteLast();
+        });
+
+        // Add random color bursts
+        setInterval(() => {
+            const orbs = document.querySelectorAll('.orb');
+            orbs.forEach(orb => {
+                const hue = Math.random() * 360;
+                orb.style.filter = `hue-rotate(${hue}deg)`;
+            });
+        }, 2000);
+    </script>
+</body>
+</html>

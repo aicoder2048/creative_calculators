@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cube Calculator - Holographic Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #ff6600;
+            overflow: hidden;
+            perspective: 1000px;
+            height: 100vh;
+            position: relative;
+            cursor: grab;
+        }
+
+        body:active {
+            cursor: grabbing;
+        }
+
+        /* Starfield Background */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Holographic Display */
+        .holographic-display {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            color: #00ffff;
+            text-shadow: 
+                0 0 10px #00ffff,
+                0 0 20px #00ffff,
+                0 0 30px #00ffff,
+                0 0 40px #00ffff;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            letter-spacing: 0.1em;
+            z-index: 100;
+            animation: hologram-flicker 0.1s infinite;
+        }
+
+        @keyframes hologram-flicker {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 1; }
+        }
+
+        /* Container */
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* 3D Cube */
+        .cube-container {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate 20s infinite linear;
+            transition: transform 0.1s;
+        }
+
+        .cube-container.spinning {
+            animation: dramatic-spin 1s ease-out;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotateX(-20deg) rotateY(0deg); }
+            100% { transform: rotateX(-20deg) rotateY(360deg); }
+        }
+
+        @keyframes dramatic-spin {
+            0% { transform: rotateX(-20deg) rotateY(0deg) rotateZ(0deg); }
+            100% { transform: rotateX(-20deg) rotateY(720deg) rotateZ(360deg); }
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff6600;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            padding: 10px;
+            box-shadow: 
+                inset 0 0 50px rgba(255, 102, 0, 0.3),
+                0 0 20px rgba(255, 102, 0, 0.5);
+        }
+
+        /* Glowing edges */
+        .cube-face::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff6600, #ff9933, #ff6600);
+            z-index: -1;
+            filter: blur(10px);
+            opacity: 0.7;
+            animation: edge-glow 2s infinite;
+        }
+
+        @keyframes edge-glow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Face positions */
+        .face-front {
+            transform: translateZ(150px);
+        }
+
+        .face-back {
+            transform: rotateY(180deg) translateZ(150px);
+        }
+
+        .face-right {
+            transform: rotateY(90deg) translateZ(150px);
+        }
+
+        .face-left {
+            transform: rotateY(-90deg) translateZ(150px);
+        }
+
+        .face-top {
+            transform: rotateX(90deg) translateZ(150px);
+        }
+
+        .face-bottom {
+            transform: rotateX(-90deg) translateZ(150px);
+        }
+
+        /* Buttons */
+        .calc-btn {
+            background: rgba(255, 102, 0, 0.1);
+            border: 1px solid #ff6600;
+            color: #ff6600;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Orbitron', 'Courier New', monospace;
+        }
+
+        .calc-btn:hover {
+            background: rgba(255, 102, 0, 0.3);
+            transform: scale(1.05);
+            box-shadow: 
+                0 0 20px rgba(255, 102, 0, 0.8),
+                inset 0 0 20px rgba(255, 102, 0, 0.3);
+        }
+
+        .calc-btn:active {
+            transform: scale(0.95);
+        }
+
+        .calc-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 102, 0, 0.8) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .calc-btn:active::after {
+            width: 100px;
+            height: 100px;
+        }
+
+        /* Special buttons */
+        .operator {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .operator:hover {
+            background: rgba(0, 255, 255, 0.3);
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.8),
+                inset 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .special {
+            background: rgba(255, 0, 255, 0.1);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+
+        .special:hover {
+            background: rgba(255, 0, 255, 0.3);
+            box-shadow: 
+                0 0 20px rgba(255, 0, 255, 0.8),
+                inset 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        /* Vertices */
+        .vertex {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6600;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px #ff6600,
+                0 0 40px #ff6600,
+                0 0 60px #ff6600;
+            animation: vertex-pulse 1.5s infinite;
+        }
+
+        @keyframes vertex-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Vertex positions */
+        .vertex-1 { transform: translate3d(-160px, -160px, 160px); }
+        .vertex-2 { transform: translate3d(140px, -160px, 160px); }
+        .vertex-3 { transform: translate3d(140px, 140px, 160px); }
+        .vertex-4 { transform: translate3d(-160px, 140px, 160px); }
+        .vertex-5 { transform: translate3d(-160px, -160px, -160px); }
+        .vertex-6 { transform: translate3d(140px, -160px, -160px); }
+        .vertex-7 { transform: translate3d(140px, 140px, -160px); }
+        .vertex-8 { transform: translate3d(-160px, 140px, -160px); }
+
+        /* HUD Elements */
+        .hud {
+            position: fixed;
+            color: #00ffff;
+            font-size: 0.8em;
+            opacity: 0.7;
+            font-family: 'Orbitron', 'Courier New', monospace;
+        }
+
+        .hud-top-left {
+            top: 20px;
+            left: 20px;
+        }
+
+        .hud-top-right {
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+
+        .hud-bottom-left {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .hud-bottom-right {
+            bottom: 20px;
+            right: 20px;
+            text-align: right;
+        }
+
+        /* Scanlines effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.03) 2px,
+                rgba(255, 255, 255, 0.03) 4px
+            );
+            animation: scanlines 8s linear infinite;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Starfield -->
+    <div class="stars" id="stars"></div>
+
+    <!-- Scanlines -->
+    <div class="scanlines"></div>
+
+    <!-- HUD Elements -->
+    <div class="hud hud-top-left">
+        <div>HOLOGRAPHIC CALCULATOR v3.0</div>
+        <div>STATUS: ONLINE</div>
+    </div>
+    <div class="hud hud-top-right">
+        <div id="time"></div>
+        <div>QUANTUM CORE: ACTIVE</div>
+    </div>
+    <div class="hud hud-bottom-left">
+        <div>ROTATION: <span id="rotation">0°</span></div>
+        <div>PRECISION: 64-BIT</div>
+    </div>
+    <div class="hud hud-bottom-right">
+        <div>CALCULATIONS: <span id="calc-count">0</span></div>
+        <div>ENERGY: ████████░░</div>
+    </div>
+
+    <!-- Holographic Display -->
+    <div class="holographic-display" id="display">0</div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="cube-container" id="cube">
+            <!-- Vertices -->
+            <div class="vertex vertex-1"></div>
+            <div class="vertex vertex-2"></div>
+            <div class="vertex vertex-3"></div>
+            <div class="vertex vertex-4"></div>
+            <div class="vertex vertex-5"></div>
+            <div class="vertex vertex-6"></div>
+            <div class="vertex vertex-7"></div>
+            <div class="vertex vertex-8"></div>
+
+            <!-- Front Face - Numbers -->
+            <div class="cube-face face-front">
+                <button class="calc-btn" data-value="7">7</button>
+                <button class="calc-btn" data-value="8">8</button>
+                <button class="calc-btn" data-value="9">9</button>
+                <button class="calc-btn" data-value="4">4</button>
+                <button class="calc-btn" data-value="5">5</button>
+                <button class="calc-btn" data-value="6">6</button>
+                <button class="calc-btn" data-value="1">1</button>
+                <button class="calc-btn" data-value="2">2</button>
+                <button class="calc-btn" data-value="3">3</button>
+            </div>
+
+            <!-- Back Face - More Numbers -->
+            <div class="cube-face face-back">
+                <button class="calc-btn" data-value="0">0</button>
+                <button class="calc-btn" data-value=".">.</button>
+                <button class="calc-btn special" data-value="=">=</button>
+                <button class="calc-btn special" data-value="clear">C</button>
+                <button class="calc-btn special" data-value="backspace">←</button>
+                <button class="calc-btn special" data-value="sign">±</button>
+                <button class="calc-btn" data-value="(">(</button>
+                <button class="calc-btn" data-value=")">)</button>
+                <button class="calc-btn special" data-value="pi">π</button>
+            </div>
+
+            <!-- Right Face - Basic Operators -->
+            <div class="cube-face face-right">
+                <button class="calc-btn operator" data-value="+">+</button>
+                <button class="calc-btn operator" data-value="-">−</button>
+                <button class="calc-btn operator" data-value="*">×</button>
+                <button class="calc-btn operator" data-value="/">÷</button>
+                <button class="calc-btn operator" data-value="%">%</button>
+                <button class="calc-btn operator" data-value="^">^</button>
+                <button class="calc-btn operator" data-value="sqrt">√</button>
+                <button class="calc-btn operator" data-value="square">x²</button>
+                <button class="calc-btn operator" data-value="inverse">1/x</button>
+            </div>
+
+            <!-- Left Face - Scientific Functions -->
+            <div class="cube-face face-left">
+                <button class="calc-btn special" data-value="sin">sin</button>
+                <button class="calc-btn special" data-value="cos">cos</button>
+                <button class="calc-btn special" data-value="tan">tan</button>
+                <button class="calc-btn special" data-value="log">log</button>
+                <button class="calc-btn special" data-value="ln">ln</button>
+                <button class="calc-btn special" data-value="exp">eˣ</button>
+                <button class="calc-btn special" data-value="abs">|x|</button>
+                <button class="calc-btn special" data-value="floor">⌊x⌋</button>
+                <button class="calc-btn special" data-value="ceil">⌈x⌉</button>
+            </div>
+
+            <!-- Top Face - Memory Functions -->
+            <div class="cube-face face-top">
+                <button class="calc-btn special" data-value="mc">MC</button>
+                <button class="calc-btn special" data-value="mr">MR</button>
+                <button class="calc-btn special" data-value="m+">M+</button>
+                <button class="calc-btn special" data-value="m-">M−</button>
+                <button class="calc-btn special" data-value="ms">MS</button>
+                <button class="calc-btn special" data-value="history">H</button>
+                <button class="calc-btn special" data-value="rad">RAD</button>
+                <button class="calc-btn special" data-value="deg">DEG</button>
+                <button class="calc-btn special" data-value="e">e</button>
+            </div>
+
+            <!-- Bottom Face - Advanced Functions -->
+            <div class="cube-face face-bottom">
+                <button class="calc-btn special" data-value="factorial">x!</button>
+                <button class="calc-btn special" data-value="permutation">nPr</button>
+                <button class="calc-btn special" data-value="combination">nCr</button>
+                <button class="calc-btn special" data-value="random">RND</button>
+                <button class="calc-btn special" data-value="round">RND</button>
+                <button class="calc-btn special" data-value="min">MIN</button>
+                <button class="calc-btn special" data-value="max">MAX</button>
+                <button class="calc-btn special" data-value="sum">Σ</button>
+                <button class="calc-btn special" data-value="avg">AVG</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Calculator State
+        let display = document.getElementById('display');
+        let cube = document.getElementById('cube');
+        let currentValue = '0';
+        let previousValue = null;
+        let operation = null;
+        let shouldResetDisplay = false;
+        let memory = 0;
+        let history = [];
+        let angleMode = 'RAD';
+        let calcCount = 0;
+
+        // Mouse rotation
+        let isMouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        let rotationX = -20;
+        let rotationY = 0;
+        let autoRotate = true;
+        let rotationSpeed = 0;
+
+        // Create starfield
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.opacity = Math.random();
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = 
+                now.toTimeString().split(' ')[0];
+        }
+
+        // Update rotation display
+        function updateRotationDisplay() {
+            document.getElementById('rotation').textContent = 
+                Math.round(rotationY % 360) + '°';
+        }
+
+        // Mouse controls
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('calc-btn')) return;
+            isMouseDown = true;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            autoRotate = false;
+            cube.style.animation = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isMouseDown) return;
+            
+            const deltaX = e.clientX - mouseX;
+            const deltaY = e.clientY - mouseY;
+            
+            rotationY += deltaX * 0.5;
+            rotationX += deltaY * 0.5;
+            
+            cube.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            updateRotationDisplay();
+        });
+
+        document.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            // Resume auto rotation after 3 seconds
+            setTimeout(() => {
+                if (!isMouseDown) {
+                    autoRotate = true;
+                    cube.style.animation = 'rotate 20s infinite linear';
+                }
+            }, 3000);
+        });
+
+        // Update display
+        function updateDisplay(value) {
+            display.textContent = value;
+            currentValue = value;
+        }
+
+        // Dramatic spin effect
+        function dramaticSpin() {
+            cube.classList.add('spinning');
+            setTimeout(() => {
+                cube.classList.remove('spinning');
+            }, 1000);
+        }
+
+        // Calculate result
+        function calculate() {
+            if (operation && previousValue !== null) {
+                const prev = parseFloat(previousValue);
+                const current = parseFloat(currentValue);
+                let result;
+
+                switch (operation) {
+                    case '+': result = prev + current; break;
+                    case '-': result = prev - current; break;
+                    case '*': result = prev * current; break;
+                    case '/': result = current !== 0 ? prev / current : 'ERROR'; break;
+                    case '%': result = prev % current; break;
+                    case '^': result = Math.pow(prev, current); break;
+                    default: result = current;
+                }
+
+                if (result !== 'ERROR') {
+                    result = parseFloat(result.toFixed(10));
+                }
+                
+                updateDisplay(result.toString());
+                history.push(`${previousValue} ${operation} ${currentValue} = ${result}`);
+                previousValue = null;
+                operation = null;
+                shouldResetDisplay = true;
+                
+                calcCount++;
+                document.getElementById('calc-count').textContent = calcCount;
+                dramaticSpin();
+            }
+        }
+
+        // Handle button clicks
+        document.querySelectorAll('.calc-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const value = e.target.getAttribute('data-value');
+                
+                // Number input
+                if (!isNaN(value) || value === '.') {
+                    if (shouldResetDisplay || currentValue === '0') {
+                        currentValue = '';
+                        shouldResetDisplay = false;
+                    }
+                    if (value === '.' && currentValue.includes('.')) return;
+                    updateDisplay(currentValue + value);
+                }
+                
+                // Operators
+                else if (['+', '-', '*', '/', '%', '^'].includes(value)) {
+                    if (operation && !shouldResetDisplay) {
+                        calculate();
+                    }
+                    previousValue = currentValue;
+                    operation = value;
+                    shouldResetDisplay = true;
+                }
+                
+                // Special operations
+                else {
+                    switch (value) {
+                        case '=':
+                            calculate();
+                            break;
+                        case 'clear':
+                            updateDisplay('0');
+                            previousValue = null;
+                            operation = null;
+                            break;
+                        case 'backspace':
+                            if (currentValue.length > 1) {
+                                updateDisplay(currentValue.slice(0, -1));
+                            } else {
+                                updateDisplay('0');
+                            }
+                            break;
+                        case 'sign':
+                            updateDisplay((parseFloat(currentValue) * -1).toString());
+                            break;
+                        case 'sqrt':
+                            updateDisplay(Math.sqrt(parseFloat(currentValue)).toString());
+                            dramaticSpin();
+                            break;
+                        case 'square':
+                            updateDisplay(Math.pow(parseFloat(currentValue), 2).toString());
+                            dramaticSpin();
+                            break;
+                        case 'inverse':
+                            const inv = parseFloat(currentValue);
+                            updateDisplay(inv !== 0 ? (1 / inv).toString() : 'ERROR');
+                            dramaticSpin();
+                            break;
+                        case 'sin':
+                            const sinVal = angleMode === 'RAD' ? 
+                                Math.sin(parseFloat(currentValue)) : 
+                                Math.sin(parseFloat(currentValue) * Math.PI / 180);
+                            updateDisplay(sinVal.toString());
+                            dramaticSpin();
+                            break;
+                        case 'cos':
+                            const cosVal = angleMode === 'RAD' ? 
+                                Math.cos(parseFloat(currentValue)) : 
+                                Math.cos(parseFloat(currentValue) * Math.PI / 180);
+                            updateDisplay(cosVal.toString());
+                            dramaticSpin();
+                            break;
+                        case 'tan':
+                            const tanVal = angleMode === 'RAD' ? 
+                                Math.tan(parseFloat(currentValue)) : 
+                                Math.tan(parseFloat(currentValue) * Math.PI / 180);
+                            updateDisplay(tanVal.toString());
+                            dramaticSpin();
+                            break;
+                        case 'log':
+                            updateDisplay(Math.log10(parseFloat(currentValue)).toString());
+                            dramaticSpin();
+                            break;
+                        case 'ln':
+                            updateDisplay(Math.log(parseFloat(currentValue)).toString());
+                            dramaticSpin();
+                            break;
+                        case 'exp':
+                            updateDisplay(Math.exp(parseFloat(currentValue)).toString());
+                            dramaticSpin();
+                            break;
+                        case 'pi':
+                            updateDisplay(Math.PI.toString());
+                            break;
+                        case 'e':
+                            updateDisplay(Math.E.toString());
+                            break;
+                        case 'abs':
+                            updateDisplay(Math.abs(parseFloat(currentValue)).toString());
+                            break;
+                        case 'floor':
+                            updateDisplay(Math.floor(parseFloat(currentValue)).toString());
+                            break;
+                        case 'ceil':
+                            updateDisplay(Math.ceil(parseFloat(currentValue)).toString());
+                            break;
+                        case 'random':
+                            updateDisplay(Math.random().toString());
+                            break;
+                        case 'factorial':
+                            let n = parseInt(currentValue);
+                            let fact = 1;
+                            for (let i = 2; i <= n; i++) fact *= i;
+                            updateDisplay(fact.toString());
+                            dramaticSpin();
+                            break;
+                        case 'mc':
+                            memory = 0;
+                            break;
+                        case 'mr':
+                            updateDisplay(memory.toString());
+                            break;
+                        case 'm+':
+                            memory += parseFloat(currentValue);
+                            break;
+                        case 'm-':
+                            memory -= parseFloat(currentValue);
+                            break;
+                        case 'ms':
+                            memory = parseFloat(currentValue);
+                            break;
+                        case 'rad':
+                            angleMode = 'RAD';
+                            break;
+                        case 'deg':
+                            angleMode = 'DEG';
+                            break;
+                    }
+                }
+            });
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            const button = document.querySelector(`[data-value="${key}"]`);
+            if (button) {
+                button.click();
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = 'scale(1)';
+                }, 100);
+            }
+            
+            // Special keyboard mappings
+            if (key === 'Enter') {
+                document.querySelector('[data-value="="]').click();
+            } else if (key === 'Escape') {
+                document.querySelector('[data-value="clear"]').click();
+            } else if (key === 'Backspace') {
+                document.querySelector('[data-value="backspace"]').click();
+            }
+        });
+
+        // Initialize
+        createStars();
+        updateTime();
+        setInterval(updateTime, 1000);
+        setInterval(updateRotationDisplay, 100);
+    </script>
+</body>
+</html>

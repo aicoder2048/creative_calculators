@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBRPNK_CALC_v3.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: #000;
+            color: #0f0;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Matrix rain background */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        
+        /* Scanlines effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* CRT effect */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        
+        /* Calculator container */
+        .calculator {
+            background: rgba(0, 10, 0, 0.9);
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 50px #0f0, inset 0 0 50px rgba(0, 255, 0, 0.1);
+            position: relative;
+            animation: flicker 0.15s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.98; }
+            100% { opacity: 1; }
+        }
+        
+        /* ASCII art header */
+        .ascii-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 10px;
+            line-height: 1.2;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            white-space: pre;
+        }
+        
+        /* Display */
+        .display {
+            background: #000;
+            border: 2px solid #0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-align: right;
+            min-height: 60px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        
+        .display::before {
+            content: attr(data-glitch);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #f00;
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+        
+        @keyframes glitch-anim {
+            0% { clip: rect(45px, 9999px, 56px, 0); transform: skew(0.5deg); }
+            5% { clip: rect(20px, 9999px, 90px, 0); transform: skew(0.5deg); }
+            10% { clip: rect(85px, 9999px, 100px, 0); transform: skew(0.5deg); }
+            15% { clip: rect(40px, 9999px, 75px, 0); transform: skew(0.5deg); }
+            20% { clip: rect(65px, 9999px, 95px, 0); transform: skew(0.5deg); }
+            25% { clip: rect(10px, 9999px, 50px, 0); transform: skew(0.5deg); }
+            30% { clip: rect(30px, 9999px, 70px, 0); transform: skew(0.5deg); }
+            35% { clip: rect(55px, 9999px, 85px, 0); transform: skew(0.5deg); }
+            40% { clip: rect(25px, 9999px, 60px, 0); transform: skew(0.5deg); }
+            45% { clip: rect(70px, 9999px, 100px, 0); transform: skew(0.5deg); }
+            50% { clip: rect(15px, 9999px, 45px, 0); transform: skew(0.5deg); }
+            55% { clip: rect(80px, 9999px, 95px, 0); transform: skew(0.5deg); }
+            60% { clip: rect(35px, 9999px, 65px, 0); transform: skew(0.5deg); }
+            65% { clip: rect(50px, 9999px, 80px, 0); transform: skew(0.5deg); }
+            70% { clip: rect(5px, 9999px, 35px, 0); transform: skew(0.5deg); }
+            75% { clip: rect(60px, 9999px, 90px, 0); transform: skew(0.5deg); }
+            80% { clip: rect(20px, 9999px, 55px, 0); transform: skew(0.5deg); }
+            85% { clip: rect(75px, 9999px, 100px, 0); transform: skew(0.5deg); }
+            90% { clip: rect(30px, 9999px, 70px, 0); transform: skew(0.5deg); }
+            95% { clip: rect(45px, 9999px, 85px, 0); transform: skew(0.5deg); }
+            100% { clip: rect(10px, 9999px, 40px, 0); transform: skew(0.5deg); }
+        }
+        
+        /* Buttons grid */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        /* Button styles */
+        .btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 20px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        .btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #0f0;
+            animation: btnGlitch 0.3s infinite;
+        }
+        
+        @keyframes btnGlitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 30px #f00;
+            color: #f00;
+            border-color: #f00;
+        }
+        
+        .btn.operator {
+            background: rgba(255, 0, 0, 0.1);
+            color: #f00;
+            border-color: #f00;
+        }
+        
+        .btn.operator:hover {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 20px #f00;
+        }
+        
+        .btn.equals {
+            grid-column: span 2;
+            background: rgba(0, 255, 0, 0.2);
+        }
+        
+        .btn.clear {
+            background: rgba(255, 255, 0, 0.1);
+            color: #ff0;
+            border-color: #ff0;
+        }
+        
+        /* Glitch text effect */
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .glitch::before {
+            animation: glitch-text-1 0.4s infinite;
+            color: #f00;
+            z-index: -1;
+        }
+        
+        .glitch::after {
+            animation: glitch-text-2 0.4s infinite;
+            color: #0ff;
+            z-index: -2;
+        }
+        
+        @keyframes glitch-text-1 {
+            0% { clip: rect(20px, 9999px, 90px, 0); transform: skew(0.8deg); }
+            5% { clip: rect(65px, 9999px, 95px, 0); transform: skew(0.8deg); }
+            10% { clip: rect(40px, 9999px, 75px, 0); transform: skew(0.8deg); }
+            15% { clip: rect(85px, 9999px, 100px, 0); transform: skew(0.8deg); }
+            20% { clip: rect(10px, 9999px, 50px, 0); transform: skew(0.8deg); }
+            25% { clip: rect(55px, 9999px, 85px, 0); transform: skew(0.8deg); }
+            30% { clip: rect(30px, 9999px, 70px, 0); transform: skew(0.8deg); }
+            35% { clip: rect(70px, 9999px, 100px, 0); transform: skew(0.8deg); }
+            40% { clip: rect(25px, 9999px, 60px, 0); transform: skew(0.8deg); }
+            45% { clip: rect(80px, 9999px, 95px, 0); transform: skew(0.8deg); }
+            50% { clip: rect(15px, 9999px, 45px, 0); transform: skew(0.8deg); }
+            55% { clip: rect(50px, 9999px, 80px, 0); transform: skew(0.8deg); }
+            60% { clip: rect(35px, 9999px, 65px, 0); transform: skew(0.8deg); }
+            65% { clip: rect(60px, 9999px, 90px, 0); transform: skew(0.8deg); }
+            70% { clip: rect(5px, 9999px, 35px, 0); transform: skew(0.8deg); }
+            75% { clip: rect(75px, 9999px, 100px, 0); transform: skew(0.8deg); }
+            80% { clip: rect(20px, 9999px, 55px, 0); transform: skew(0.8deg); }
+            85% { clip: rect(45px, 9999px, 85px, 0); transform: skew(0.8deg); }
+            90% { clip: rect(30px, 9999px, 70px, 0); transform: skew(0.8deg); }
+            95% { clip: rect(10px, 9999px, 40px, 0); transform: skew(0.8deg); }
+            100% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.8deg); }
+        }
+        
+        @keyframes glitch-text-2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(-0.8deg); }
+            5% { clip: rect(20px, 9999px, 90px, 0); transform: skew(-0.8deg); }
+            10% { clip: rect(85px, 9999px, 100px, 0); transform: skew(-0.8deg); }
+            15% { clip: rect(40px, 9999px, 75px, 0); transform: skew(-0.8deg); }
+            20% { clip: rect(55px, 9999px, 85px, 0); transform: skew(-0.8deg); }
+            25% { clip: rect(10px, 9999px, 50px, 0); transform: skew(-0.8deg); }
+            30% { clip: rect(70px, 9999px, 100px, 0); transform: skew(-0.8deg); }
+            35% { clip: rect(30px, 9999px, 70px, 0); transform: skew(-0.8deg); }
+            40% { clip: rect(80px, 9999px, 95px, 0); transform: skew(-0.8deg); }
+            45% { clip: rect(25px, 9999px, 60px, 0); transform: skew(-0.8deg); }
+            50% { clip: rect(50px, 9999px, 80px, 0); transform: skew(-0.8deg); }
+            55% { clip: rect(15px, 9999px, 45px, 0); transform: skew(-0.8deg); }
+            60% { clip: rect(60px, 9999px, 90px, 0); transform: skew(-0.8deg); }
+            65% { clip: rect(35px, 9999px, 65px, 0); transform: skew(-0.8deg); }
+            70% { clip: rect(75px, 9999px, 100px, 0); transform: skew(-0.8deg); }
+            75% { clip: rect(5px, 9999px, 35px, 0); transform: skew(-0.8deg); }
+            80% { clip: rect(45px, 9999px, 85px, 0); transform: skew(-0.8deg); }
+            85% { clip: rect(20px, 9999px, 55px, 0); transform: skew(-0.8deg); }
+            90% { clip: rect(10px, 9999px, 40px, 0); transform: skew(-0.8deg); }
+            95% { clip: rect(30px, 9999px, 70px, 0); transform: skew(-0.8deg); }
+            100% { clip: rect(20px, 9999px, 60px, 0); transform: skew(-0.8deg); }
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #0f0;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="crt">
+    <canvas id="matrix-bg"></canvas>
+    <div class="scanlines"></div>
+    
+    <div class="calculator">
+        <div class="ascii-header">
+ ______ __   __ ______  ______  ______  __   __ __  __    
+/\  ___\\ \ / //\  == \/\  == \/\  == \/\ "-.\ \\ \/ /    
+\ \ \____\ \'/  \ \  __<\ \  __<\ \  _-/\ \ \-.  \\  _"-.  
+ \ \_____\\/   \ \_____\\ \_\ \_\\ \_\   \ \_\\"\_\\ \_\ \_\
+  \/_____/     \/_____/ \/_/ /_/ \/_/    \/_/ \/_/ \/_/\/_/
+                    C A L C _ v 3 . 0
+        </div>
+        
+        <div class="display" id="display" data-glitch="0">0</div>
+        
+        <div class="buttons">
+            <button class="btn clear" onclick="clearDisplay()">CLR</button>
+            <button class="btn operator" onclick="appendToDisplay('/')">/</button>
+            <button class="btn operator" onclick="appendToDisplay('*')">*</button>
+            <button class="btn operator" onclick="deleteLast()">DEL</button>
+            
+            <button class="btn" onclick="appendToDisplay('7')">7</button>
+            <button class="btn" onclick="appendToDisplay('8')">8</button>
+            <button class="btn" onclick="appendToDisplay('9')">9</button>
+            <button class="btn operator" onclick="appendToDisplay('-')">-</button>
+            
+            <button class="btn" onclick="appendToDisplay('4')">4</button>
+            <button class="btn" onclick="appendToDisplay('5')">5</button>
+            <button class="btn" onclick="appendToDisplay('6')">6</button>
+            <button class="btn operator" onclick="appendToDisplay('+')">+</button>
+            
+            <button class="btn" onclick="appendToDisplay('1')">1</button>
+            <button class="btn" onclick="appendToDisplay('2')">2</button>
+            <button class="btn" onclick="appendToDisplay('3')">3</button>
+            <button class="btn" onclick="appendToDisplay('.')">.</button>
+            
+            <button class="btn" onclick="appendToDisplay('0')">0</button>
+            <button class="btn" onclick="appendToDisplay('(')">(</button>
+            <button class="btn" onclick="appendToDisplay(')')">)</button>
+            <button class="btn equals operator" onclick="calculate()">=</button>
+        </div>
+        
+        <div class="footer">
+            <span class="glitch" data-text="SYSTEM.ONLINE">SYSTEM.ONLINE</span>
+        </div>
+    </div>
+    
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+        const matrixArray = matrix.split("");
+        
+        const fontSize = 10;
+        const columns = canvas.width / fontSize;
+        
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        
+        setInterval(drawMatrix, 35);
+        
+        // Calculator functionality
+        let display = document.getElementById('display');
+        let currentInput = '0';
+        let shouldResetDisplay = false;
+        
+        function updateDisplay() {
+            display.textContent = currentInput;
+            display.setAttribute('data-glitch', currentInput);
+            
+            // Random text corruption effect
+            if(Math.random() > 0.95) {
+                const corrupted = currentInput.split('').map(char => 
+                    Math.random() > 0.8 ? matrix[Math.floor(Math.random() * matrix.length)] : char
+                ).join('');
+                display.setAttribute('data-glitch', corrupted);
+                setTimeout(() => display.setAttribute('data-glitch', currentInput), 100);
+            }
+        }
+        
+        function clearDisplay() {
+            currentInput = '0';
+            updateDisplay();
+            glitchEffect();
+        }
+        
+        function appendToDisplay(value) {
+            if(shouldResetDisplay) {
+                currentInput = '0';
+                shouldResetDisplay = false;
+            }
+            
+            if(currentInput === '0' && value !== '.') {
+                currentInput = value;
+            } else {
+                currentInput += value;
+            }
+            updateDisplay();
+            glitchEffect();
+        }
+        
+        function deleteLast() {
+            if(currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+            glitchEffect();
+        }
+        
+        function calculate() {
+            try {
+                // Evaluate the expression safely
+                const result = Function('"use strict"; return (' + currentInput + ')')();
+                currentInput = result.toString();
+                shouldResetDisplay = true;
+                updateDisplay();
+                
+                // Special glitch effect for calculation
+                document.querySelector('.calculator').style.animation = 'none';
+                setTimeout(() => {
+                    document.querySelector('.calculator').style.animation = 'flicker 0.15s infinite';
+                }, 100);
+                
+            } catch(e) {
+                currentInput = 'ERROR';
+                shouldResetDisplay = true;
+                updateDisplay();
+                
+                // Red error flash
+                display.style.color = '#f00';
+                display.style.textShadow = '0 0 20px #f00';
+                setTimeout(() => {
+                    display.style.color = '#0f0';
+                    display.style.textShadow = '0 0 10px #0f0';
+                }, 500);
+            }
+            glitchEffect();
+        }
+        
+        // Random glitch effects
+        function glitchEffect() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                if(Math.random() > 0.9) {
+                    btn.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+                    setTimeout(() => btn.style.transform = 'translate(0, 0)', 50);
+                }
+            });
+        }
+        
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if(e.key >= '0' && e.key <= '9') appendToDisplay(e.key);
+            else if(e.key === '.') appendToDisplay('.');
+            else if(e.key === '+') appendToDisplay('+');
+            else if(e.key === '-') appendToDisplay('-');
+            else if(e.key === '*') appendToDisplay('*');
+            else if(e.key === '/') appendToDisplay('/');
+            else if(e.key === '(') appendToDisplay('(');
+            else if(e.key === ')') appendToDisplay(')');
+            else if(e.key === 'Enter' || e.key === '=') calculate();
+            else if(e.key === 'Escape' || e.key === 'c' || e.key === 'C') clearDisplay();
+            else if(e.key === 'Backspace') deleteLast();
+        });
+        
+        // Random glitch on buttons periodically
+        setInterval(() => {
+            const buttons = document.querySelectorAll('.btn');
+            const randomBtn = buttons[Math.floor(Math.random() * buttons.length)];
+            randomBtn.style.color = '#f00';
+            randomBtn.style.borderColor = '#f00';
+            setTimeout(() => {
+                randomBtn.style.color = '';
+                randomBtn.style.borderColor = '';
+            }, 100);
+        }, 3000);
+        
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

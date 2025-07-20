@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Helix Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        /* Cellular background */
+        .cellular-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 140, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255, 140, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 50% 20%, rgba(0, 255, 200, 0.05) 0%, transparent 40%);
+            animation: cellularFloat 30s ease-in-out infinite;
+        }
+
+        @keyframes cellularFloat {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Microscopic particles */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 140, 0, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 100vh) scale(0); }
+            10% { transform: translate(10px, 90vh) scale(1); }
+            100% { transform: translate(-10px, -100vh) scale(0); }
+        }
+
+        /* Main calculator container */
+        .calculator {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            transform-style: preserve-3d;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        /* DNA Helix Structure */
+        .dna-helix {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .helix-strand {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        /* Base pairs */
+        .base-pair {
+            position: absolute;
+            width: 300px;
+            height: 40px;
+            left: 50%;
+            transform-origin: center;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .base-pair:hover {
+            filter: brightness(1.5);
+            transform: scale(1.1);
+        }
+
+        /* Nucleotides */
+        .nucleotide {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 
+                0 0 20px rgba(255, 140, 0, 0.3),
+                inset 0 0 20px rgba(0, 255, 200, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .nucleotide.left {
+            left: 0;
+            background: linear-gradient(45deg, #16213e, #0f3460);
+        }
+
+        .nucleotide.right {
+            right: 0;
+            background: linear-gradient(45deg, #0f3460, #16213e);
+        }
+
+        .nucleotide:hover {
+            box-shadow: 
+                0 0 30px rgba(255, 140, 0, 0.6),
+                inset 0 0 30px rgba(0, 255, 200, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* Connector */
+        .connector {
+            position: absolute;
+            width: 140px;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                rgba(255, 140, 0, 0.8),
+                rgba(255, 140, 0, 0.3),
+                rgba(255, 140, 0, 0.8));
+            left: 80px;
+            top: 19px;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scaleX(1); }
+            50% { opacity: 1; transform: scaleX(1.1); }
+        }
+
+        /* Phosphate backbone */
+        .backbone {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                rgba(255, 140, 0, 0.8),
+                rgba(255, 140, 0, 0.4),
+                rgba(255, 140, 0, 0.8));
+            box-shadow: 
+                0 0 20px rgba(255, 140, 0, 0.6),
+                0 0 40px rgba(255, 140, 0, 0.3);
+        }
+
+        .backbone.left {
+            left: 40px;
+        }
+
+        .backbone.right {
+            right: 40px;
+        }
+
+        /* Display */
+        .display {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 140, 0, 0.5);
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            box-shadow: 
+                0 0 30px rgba(255, 140, 0, 0.3),
+                inset 0 0 20px rgba(0, 255, 200, 0.1);
+        }
+
+        .genetic-sequence {
+            font-size: 14px;
+            color: rgba(0, 255, 200, 0.8);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
+        }
+
+        .result {
+            font-size: 28px;
+            color: #ff8c00;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.8);
+            margin-top: 10px;
+        }
+
+        /* Operator buttons */
+        .operator-btn {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(255, 140, 0, 0.3), rgba(255, 140, 0, 0.1));
+            border: 2px solid rgba(255, 140, 0, 0.6);
+            border-radius: 50%;
+            color: #ff8c00;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.5s ease;
+            box-shadow: 
+                0 0 30px rgba(255, 140, 0, 0.5),
+                inset 0 0 20px rgba(0, 255, 200, 0.2);
+            z-index: 50;
+        }
+        
+        /* Special styling for equals button */
+        .operator-btn#eqBtn {
+            width: 70px;
+            height: 70px;
+            font-size: 30px;
+            background: radial-gradient(circle, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.1));
+            border-color: rgba(0, 255, 0, 0.6);
+            color: #00ff00;
+            box-shadow: 
+                0 0 35px rgba(0, 255, 0, 0.6),
+                inset 0 0 25px rgba(0, 255, 0, 0.3);
+        }
+
+        .operator-btn.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .operator-btn:hover {
+            background: radial-gradient(circle, rgba(255, 140, 0, 0.5), rgba(255, 140, 0, 0.2));
+            transform: scale(1.2) rotate(180deg);
+            box-shadow: 
+                0 0 40px rgba(255, 140, 0, 0.8),
+                inset 0 0 30px rgba(0, 255, 200, 0.4);
+        }
+        
+        .operator-btn#eqBtn:hover {
+            background: radial-gradient(circle, rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0.2));
+            box-shadow: 
+                0 0 50px rgba(0, 255, 0, 0.9),
+                inset 0 0 35px rgba(0, 255, 0, 0.5);
+        }
+
+        /* Mutation animation */
+        @keyframes mutate {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.3) rotate(90deg); }
+            50% { transform: scale(0.7) rotate(180deg); }
+            75% { transform: scale(1.2) rotate(270deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+
+        .mutating {
+            animation: mutate 0.6s ease-in-out;
+        }
+
+        /* Replication animation */
+        @keyframes replicate {
+            0% { 
+                transform: translateZ(0) scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: translateZ(100px) scale(1.5);
+                opacity: 0.5;
+            }
+            100% { 
+                transform: translateZ(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .replicating {
+            animation: replicate 1s ease-in-out;
+        }
+
+        /* Toggle button */
+        .toggle-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 30px;
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.3), rgba(255, 140, 0, 0.3));
+            border: 2px solid rgba(255, 140, 0, 0.6);
+            border-radius: 30px;
+            color: #ff8c00;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+            min-width: 100px;
+        }
+
+        .toggle-btn:hover {
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.5), rgba(255, 140, 0, 0.5));
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 140, 0, 0.6);
+        }
+
+        .toggle-btn.hex-mode {
+            background: linear-gradient(45deg, rgba(138, 43, 226, 0.3), rgba(75, 0, 130, 0.3));
+            border-color: rgba(138, 43, 226, 0.6);
+            color: #8a2be2;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+        }
+
+        .toggle-btn.hex-mode:hover {
+            background: linear-gradient(45deg, rgba(138, 43, 226, 0.5), rgba(75, 0, 130, 0.5));
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.6);
+        }
+
+        /* Mode indicator */
+        .mode-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 140, 0, 0.5);
+            border-radius: 20px;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .mode-indicator.hex-mode {
+            border-color: rgba(138, 43, 226, 0.5);
+            color: #8a2be2;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+        }
+
+        /* Hex-specific nucleotide styling */
+        .nucleotide.hex-digit {
+            background: linear-gradient(45deg, #4b0082, #8a2be2);
+            border-color: rgba(138, 43, 226, 0.6);
+            box-shadow: 
+                0 0 20px rgba(138, 43, 226, 0.5),
+                inset 0 0 20px rgba(138, 43, 226, 0.2);
+        }
+
+        /* Clear button */
+        .clear-btn {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            padding: 10px 20px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            border-radius: 20px;
+            color: #ff4444;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 0, 0, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+        }
+
+        /* Bioluminescent glow effect */
+        @keyframes glow {
+            0%, 100% { 
+                filter: brightness(1) saturate(1);
+                transform: scale(1);
+            }
+            50% { 
+                filter: brightness(1.3) saturate(1.2);
+                transform: scale(1.02);
+            }
+        }
+
+        .glowing {
+            animation: glow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="cellular-bg"></div>
+    
+    <!-- Microscopic particles -->
+    <div id="particles"></div>
+    
+    <div class="calculator" id="calculator">
+        <div class="dna-helix" id="dnaHelix">
+            <!-- Phosphate backbones -->
+            <div class="backbone left glowing"></div>
+            <div class="backbone right glowing"></div>
+            
+            <!-- Base pairs will be generated here -->
+            <div class="helix-strand" id="helixStrand"></div>
+        </div>
+        
+        <!-- Display -->
+        <div class="display">
+            <div class="genetic-sequence" id="geneticSequence">ATCG-TAGC</div>
+            <div class="result" id="result">0</div>
+        </div>
+        
+        <!-- Operator buttons (emerge from helix) -->
+        <button class="operator-btn" id="addBtn" style="top: 200px; left: -80px;">+</button>
+        <button class="operator-btn" id="subBtn" style="top: 280px; right: -80px;">-</button>
+        <button class="operator-btn" id="mulBtn" style="top: 360px; left: -80px;">×</button>
+        <button class="operator-btn" id="divBtn" style="top: 440px; right: -80px;">÷</button>
+        <button class="operator-btn" id="eqBtn" style="top: 520px; right: -80px;">=</button>
+        
+        <!-- Mode indicator -->
+        <div class="mode-indicator" id="modeIndicator">DEC</div>
+        
+        <!-- Toggle button -->
+        <button class="toggle-btn" id="toggleBtn">DEC</button>
+        
+        <!-- Clear button -->
+        <button class="clear-btn" id="clearBtn">CLEAR</button>
+    </div>
+
+    <script>
+        // Calculator state
+        let currentValue = '0';
+        let previousValue = '';
+        let operation = null;
+        let shouldResetDisplay = false;
+        let isHexMode = false;
+
+        // DNA base mapping for decimal mode
+        const decimalMapping = {
+            digitToBase: {
+                '0': 'AT', '1': 'TA', '2': 'CG', '3': 'GC', '4': 'AA',
+                '5': 'TT', '6': 'CC', '7': 'GG', '8': 'AC', '9': 'TG'
+            },
+            baseToDigit: {
+                'AT': '0', 'TA': '1', 'CG': '2', 'GC': '3', 'AA': '4',
+                'TT': '5', 'CC': '6', 'GG': '7', 'AC': '8', 'TG': '9'
+            }
+        };
+
+        // DNA base mapping for hexadecimal mode
+        const hexMapping = {
+            digitToBase: {
+                '0': 'AA', '1': 'AT', '2': 'AC', '3': 'AG',
+                '4': 'TA', '5': 'TT', '6': 'TC', '7': 'TG',
+                '8': 'CA', '9': 'CT', 'A': 'CC', 'B': 'CG',
+                'C': 'GA', 'D': 'GT', 'E': 'GC', 'F': 'GG'
+            },
+            baseToDigit: {
+                'AA': '0', 'AT': '1', 'AC': '2', 'AG': '3',
+                'TA': '4', 'TT': '5', 'TC': '6', 'TG': '7',
+                'CA': '8', 'CT': '9', 'CC': 'A', 'CG': 'B',
+                'GA': 'C', 'GT': 'D', 'GC': 'E', 'GG': 'F'
+            }
+        };
+
+        // Get current mapping based on mode
+        function getCurrentMapping() {
+            return isHexMode ? hexMapping : decimalMapping;
+        }
+
+        // Create particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Create DNA helix structure
+        function createHelix() {
+            const helixStrand = document.getElementById('helixStrand');
+            helixStrand.innerHTML = '';
+            
+            const mapping = getCurrentMapping();
+            const pairs = Object.keys(mapping.baseToDigit);
+            const numPairs = pairs.length;
+            const angleStep = 360 / numPairs;
+            const heightStep = isHexMode ? 35 : 50;
+            
+            for (let i = 0; i < numPairs; i++) {
+                const basePair = document.createElement('div');
+                basePair.className = 'base-pair';
+                basePair.style.top = `${i * heightStep + 100}px`;
+                basePair.style.transform = `translateX(-50%) rotateY(${i * angleStep}deg) translateZ(100px)`;
+                
+                const leftNucleotide = document.createElement('div');
+                leftNucleotide.className = 'nucleotide left';
+                const value = mapping.baseToDigit[pairs[i]];
+                if (isHexMode && ['A', 'B', 'C', 'D', 'E', 'F'].includes(value)) {
+                    leftNucleotide.classList.add('hex-digit');
+                }
+                leftNucleotide.textContent = pairs[i];
+                leftNucleotide.dataset.value = value;
+                
+                const rightNucleotide = document.createElement('div');
+                rightNucleotide.className = 'nucleotide right';
+                if (isHexMode && ['A', 'B', 'C', 'D', 'E', 'F'].includes(value)) {
+                    rightNucleotide.classList.add('hex-digit');
+                }
+                rightNucleotide.textContent = pairs[i].split('').reverse().join('');
+                rightNucleotide.dataset.value = value;
+                
+                const connector = document.createElement('div');
+                connector.className = 'connector';
+                
+                basePair.appendChild(leftNucleotide);
+                basePair.appendChild(connector);
+                basePair.appendChild(rightNucleotide);
+                helixStrand.appendChild(basePair);
+                
+                // Add click handlers
+                [leftNucleotide, rightNucleotide].forEach(nucleotide => {
+                    nucleotide.addEventListener('click', () => handleDigit(nucleotide.dataset.value));
+                });
+            }
+            
+            // Trigger replication animation
+            replicationAnimation();
+        }
+
+        // Handle digit input
+        function handleDigit(digit) {
+            if (shouldResetDisplay) {
+                currentValue = '0';
+                shouldResetDisplay = false;
+            }
+            
+            if (currentValue === '0') {
+                currentValue = digit;
+            } else if (currentValue.length < 10) {
+                currentValue += digit;
+            }
+            
+            updateDisplay();
+            mutateAnimation();
+        }
+
+        // Handle operations
+        function handleOperation(op) {
+            if (operation && !shouldResetDisplay) {
+                calculate();
+            }
+            
+            previousValue = currentValue;
+            operation = op;
+            shouldResetDisplay = true;
+            showOperatorButtons();
+            spliceAnimation();
+        }
+
+        // Calculate result
+        function calculate() {
+            if (!operation || !previousValue) return;
+            
+            let prev, current, result;
+            
+            if (isHexMode) {
+                prev = parseInt(previousValue, 16);
+                current = parseInt(currentValue, 16);
+            } else {
+                prev = parseFloat(previousValue);
+                current = parseFloat(currentValue);
+            }
+            
+            switch (operation) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '×': result = prev * current; break;
+                case '÷': result = current !== 0 ? prev / current : 0; break;
+            }
+            
+            if (isHexMode) {
+                // Handle negative numbers properly in hex mode
+                if (result < 0) {
+                    currentValue = '-' + Math.abs(Math.floor(result)).toString(16).toUpperCase();
+                } else {
+                    currentValue = Math.floor(result).toString(16).toUpperCase();
+                }
+            } else {
+                currentValue = result.toString();
+            }
+            
+            operation = null;
+            previousValue = '';
+            shouldResetDisplay = true;
+            
+            updateDisplay();
+            replicationAnimation();
+        }
+
+        // Update display
+        function updateDisplay() {
+            const resultEl = document.getElementById('result');
+            const sequenceEl = document.getElementById('geneticSequence');
+            
+            resultEl.textContent = currentValue;
+            
+            // Convert to genetic sequence
+            const mapping = getCurrentMapping();
+            let sequence = '';
+            let cleanValue = currentValue.replace('.', '').toUpperCase();
+            
+            // Handle negative sign
+            if (cleanValue.startsWith('-')) {
+                sequence = '(-) ';
+                cleanValue = cleanValue.substring(1);
+            }
+            
+            for (let digit of cleanValue) {
+                if (mapping.digitToBase[digit]) {
+                    sequence += mapping.digitToBase[digit] + '-';
+                }
+            }
+            
+            // Remove trailing dash and handle empty case
+            if (sequence.endsWith('-')) {
+                sequence = sequence.slice(0, -1);
+            }
+            
+            sequenceEl.textContent = sequence || 'EMPTY';
+        }
+
+        // Show/hide operator buttons
+        function showOperatorButtons() {
+            const buttons = document.querySelectorAll('.operator-btn');
+            buttons.forEach((btn, index) => {
+                setTimeout(() => {
+                    btn.classList.add('visible');
+                }, index * 100);
+            });
+        }
+
+        function hideOperatorButtons() {
+            const buttons = document.querySelectorAll('.operator-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('visible');
+            });
+        }
+
+        // Animations
+        function mutateAnimation() {
+            const nucleotides = document.querySelectorAll('.nucleotide');
+            const randomIndex = Math.floor(Math.random() * nucleotides.length);
+            nucleotides[randomIndex].classList.add('mutating');
+            setTimeout(() => {
+                nucleotides[randomIndex].classList.remove('mutating');
+            }, 600);
+        }
+
+        function spliceAnimation() {
+            const connectors = document.querySelectorAll('.connector');
+            connectors.forEach((connector, index) => {
+                setTimeout(() => {
+                    connector.style.transform = 'scaleX(1.5)';
+                    connector.style.boxShadow = '0 0 30px rgba(255, 140, 0, 1)';
+                    setTimeout(() => {
+                        connector.style.transform = 'scaleX(1)';
+                        connector.style.boxShadow = '0 0 10px rgba(255, 140, 0, 0.6)';
+                    }, 300);
+                }, index * 50);
+            });
+        }
+
+        function replicationAnimation() {
+            const helix = document.getElementById('dnaHelix');
+            helix.classList.add('replicating');
+            setTimeout(() => {
+                helix.classList.remove('replicating');
+            }, 1000);
+        }
+
+        // Toggle between decimal and hexadecimal modes
+        function toggleMode() {
+            isHexMode = !isHexMode;
+            
+            // Update UI elements
+            const toggleBtn = document.getElementById('toggleBtn');
+            const modeIndicator = document.getElementById('modeIndicator');
+            
+            if (isHexMode) {
+                toggleBtn.textContent = 'HEX';
+                toggleBtn.classList.add('hex-mode');
+                modeIndicator.textContent = 'HEX';
+                modeIndicator.classList.add('hex-mode');
+            } else {
+                toggleBtn.textContent = 'DEC';
+                toggleBtn.classList.remove('hex-mode');
+                modeIndicator.textContent = 'DEC';
+                modeIndicator.classList.remove('hex-mode');
+            }
+            
+            // Convert current value to new base
+            if (currentValue !== '0') {
+                if (isHexMode) {
+                    // Convert decimal to hex
+                    const decValue = parseFloat(currentValue);
+                    currentValue = Math.floor(decValue).toString(16).toUpperCase();
+                } else {
+                    // Convert hex to decimal
+                    const hexValue = parseInt(currentValue, 16);
+                    currentValue = hexValue.toString();
+                }
+            }
+            
+            // Recreate the helix with new mapping
+            createHelix();
+            updateDisplay();
+        }
+        
+        // Clear calculator
+        function clear() {
+            currentValue = '0';
+            previousValue = '';
+            operation = null;
+            shouldResetDisplay = false;
+            updateDisplay();
+            hideOperatorButtons();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            createHelix();
+            updateDisplay();
+            
+            // Add event listeners
+            document.getElementById('addBtn').addEventListener('click', () => handleOperation('+'));
+            document.getElementById('subBtn').addEventListener('click', () => handleOperation('-'));
+            document.getElementById('mulBtn').addEventListener('click', () => handleOperation('×'));
+            document.getElementById('divBtn').addEventListener('click', () => handleOperation('÷'));
+            document.getElementById('eqBtn').addEventListener('click', calculate);
+            document.getElementById('toggleBtn').addEventListener('click', toggleMode);
+            document.getElementById('clearBtn').addEventListener('click', clear);
+            
+            // Show operator buttons after initial load
+            setTimeout(showOperatorButtons, 1000);
+        });
+
+        // Stop rotation on hover
+        const calculator = document.getElementById('calculator');
+        calculator.addEventListener('mouseenter', () => {
+            calculator.style.animationPlayState = 'paused';
+        });
+        calculator.addEventListener('mouseleave', () => {
+            calculator.style.animationPlayState = 'running';
+        });
+    </script>
+</body>
+</html>
