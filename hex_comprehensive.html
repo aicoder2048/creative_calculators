@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DNA Calculator Hex Mode Comprehensive Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .code { font-family: monospace; background: #f5f5f5; padding: 2px 4px; }
+    </style>
+</head>
+<body>
+    <h1>DNA螺旋计算器 - 16进制模式综合测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 基本计算测试</h2>
+        <table id="basicTests"></table>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 边界情况测试</h2>
+        <table id="edgeTests"></table>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 遗传序列转换测试</h2>
+        <table id="sequenceTests"></table>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 负数处理测试</h2>
+        <table id="negativeTests"></table>
+    </div>
+
+    <script>
+        // 模拟计算器的16进制映射
+        const hexMapping = {
+            digitToBase: {
+                '0': 'AA', '1': 'AT', '2': 'AC', '3': 'AG',
+                '4': 'TA', '5': 'TT', '6': 'TC', '7': 'TG',
+                '8': 'CA', '9': 'CT', 'A': 'CC', 'B': 'CG',
+                'C': 'GA', 'D': 'GT', 'E': 'GC', 'F': 'GG'
+            }
+        };
+        
+        // 将数字转换为遗传序列
+        function toGeneticSequence(value) {
+            let sequence = '';
+            let cleanValue = value.toString().toUpperCase();
+            
+            if (cleanValue.startsWith('-')) {
+                sequence = '(-) ';
+                cleanValue = cleanValue.substring(1);
+            }
+            
+            for (let digit of cleanValue) {
+                if (hexMapping.digitToBase[digit]) {
+                    sequence += hexMapping.digitToBase[digit] + '-';
+                }
+            }
+            
+            return sequence.endsWith('-') ? sequence.slice(0, -1) : sequence;
+        }
+        
+        // 基本计算测试
+        function runBasicTests() {
+            const tests = [
+                { a: 'FF', b: '1', op: '+', expected: '100', desc: '255 + 1 = 256' },
+                { a: 'A', b: 'B', op: '+', expected: '15', desc: '10 + 11 = 21' },
+                { a: 'FF', b: 'FF', op: '+', expected: '1FE', desc: '255 + 255 = 510' },
+                { a: 'FF', b: '1', op: '-', expected: 'FE', desc: '255 - 1 = 254' },
+                { a: '10', b: '8', op: '-', expected: '8', desc: '16 - 8 = 8' },
+                { a: 'F', b: 'F', op: '×', expected: 'E1', desc: '15 × 15 = 225' },
+                { a: '10', b: '10', op: '×', expected: '100', desc: '16 × 16 = 256' },
+                { a: 'FF', b: 'F', op: '÷', expected: '11', desc: '255 ÷ 15 = 17' },
+                { a: '64', b: 'A', op: '÷', expected: 'A', desc: '100 ÷ 10 = 10' }
+            ];
+            
+            let html = '<tr><th>表达式</th><th>描述</th><th>预期结果</th><th>计算结果</th><th>遗传序列</th><th>状态</th></tr>';
+            
+            tests.forEach(test => {
+                const a = parseInt(test.a, 16);
+                const b = parseInt(test.b, 16);
+                let result;
+                
+                switch (test.op) {
+                    case '+': result = a + b; break;
+                    case '-': result = a - b; break;
+                    case '×': result = a * b; break;
+                    case '÷': result = Math.floor(a / b); break;
+                }
+                
+                const hexResult = result.toString(16).toUpperCase();
+                const isCorrect = hexResult === test.expected;
+                const sequence = toGeneticSequence(hexResult);
+                
+                html += `<tr class="${isCorrect ? 'pass' : 'fail'}">
+                    <td class="code">${test.a} ${test.op} ${test.b}</td>
+                    <td>${test.desc}</td>
+                    <td class="code">${test.expected}</td>
+                    <td class="code">${hexResult}</td>
+                    <td class="code">${sequence}</td>
+                    <td>${isCorrect ? '✓ 通过' : '✗ 失败'}</td>
+                </tr>`;
+            });
+            
+            document.getElementById('basicTests').innerHTML = html;
+        }
+        
+        // 边界情况测试
+        function runEdgeTests() {
+            const tests = [
+                { a: '0', b: '0', op: '+', expected: '0', desc: '0 + 0 = 0' },
+                { a: 'FFF', b: '1', op: '+', expected: '1000', desc: '4095 + 1 = 4096' },
+                { a: '1', b: '0', op: '÷', expected: 'Infinity', desc: '除以0' },
+                { a: '0', b: 'F', op: '×', expected: '0', desc: '0乘任何数' }
+            ];
+            
+            let html = '<tr><th>表达式</th><th>描述</th><th>预期</th><th>结果</th><th>状态</th></tr>';
+            
+            tests.forEach(test => {
+                const a = parseInt(test.a, 16);
+                const b = parseInt(test.b, 16);
+                let result;
+                
+                switch (test.op) {
+                    case '+': result = a + b; break;
+                    case '-': result = a - b; break;
+                    case '×': result = a * b; break;
+                    case '÷': result = b !== 0 ? Math.floor(a / b) : 0; break;
+                }
+                
+                const hexResult = result.toString(16).toUpperCase();
+                const isCorrect = hexResult === test.expected || (test.expected === 'Infinity' && b === 0);
+                
+                html += `<tr class="${isCorrect ? 'pass' : 'fail'}">
+                    <td class="code">${test.a} ${test.op} ${test.b}</td>
+                    <td>${test.desc}</td>
+                    <td class="code">${test.expected}</td>
+                    <td class="code">${hexResult}</td>
+                    <td>${isCorrect ? '✓' : '✗'}</td>
+                </tr>`;
+            });
+            
+            document.getElementById('edgeTests').innerHTML = html;
+        }
+        
+        // 遗传序列测试
+        function runSequenceTests() {
+            const tests = [
+                { value: '0', expected: 'AA' },
+                { value: 'F', expected: 'GG' },
+                { value: 'ABC', expected: 'CC-CG-GA' },
+                { value: '123', expected: 'AT-AC-AG' },
+                { value: 'FACE', expected: 'GG-CC-GA-GC' },
+                { value: '-5', expected: '(-) TT' }
+            ];
+            
+            let html = '<tr><th>16进制值</th><th>预期序列</th><th>实际序列</th><th>状态</th></tr>';
+            
+            tests.forEach(test => {
+                const sequence = toGeneticSequence(test.value);
+                const isCorrect = sequence === test.expected;
+                
+                html += `<tr class="${isCorrect ? 'pass' : 'fail'}">
+                    <td class="code">${test.value}</td>
+                    <td class="code">${test.expected}</td>
+                    <td class="code">${sequence}</td>
+                    <td>${isCorrect ? '✓' : '✗'}</td>
+                </tr>`;
+            });
+            
+            document.getElementById('sequenceTests').innerHTML = html;
+        }
+        
+        // 负数测试
+        function runNegativeTests() {
+            const tests = [
+                { a: 'A', b: 'F', op: '-', desc: '10 - 15 = -5' },
+                { a: '0', b: '1', op: '-', desc: '0 - 1 = -1' },
+                { a: '5', b: 'A', op: '-', desc: '5 - 10 = -5' }
+            ];
+            
+            let html = '<tr><th>表达式</th><th>描述</th><th>十进制结果</th><th>16进制结果</th><th>遗传序列</th></tr>';
+            
+            tests.forEach(test => {
+                const a = parseInt(test.a, 16);
+                const b = parseInt(test.b, 16);
+                const result = a - b;
+                const hexResult = result < 0 ? '-' + Math.abs(result).toString(16).toUpperCase() : result.toString(16).toUpperCase();
+                const sequence = toGeneticSequence(hexResult);
+                
+                html += `<tr>
+                    <td class="code">${test.a} ${test.op} ${test.b}</td>
+                    <td>${test.desc}</td>
+                    <td>${result}</td>
+                    <td class="code">${hexResult}</td>
+                    <td class="code">${sequence}</td>
+                </tr>`;
+            });
+            
+            document.getElementById('negativeTests').innerHTML = html;
+        }
+        
+        // 运行所有测试
+        runBasicTests();
+        runEdgeTests();
+        runSequenceTests();
+        runNegativeTests();
+    </script>
+</body>
+</html>
